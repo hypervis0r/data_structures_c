@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "linked_list.h"
+
 struct person_info
 {
     char* name;
@@ -11,6 +13,7 @@ struct person_info
 
 struct hash_table_item
 {
+    struct hash_table_item* next;
     char* key;
     struct person_info* value;
 };
@@ -21,6 +24,17 @@ struct hash_table
     size_t size;
     size_t count;
 };
+
+void* search_linked_list(struct hash_table_item* head, char* key)
+{
+    do
+    {
+        if (strcmp(head->key, key) == 0)
+            return head->value;
+    } while ((head = head->next));
+
+    return NULL;
+}
 
 uint64_t hash_string_djb2(char* str)
 {
@@ -39,6 +53,7 @@ struct hash_table_item* create_hash_table_item(char* key, size_t key_len, void* 
 
     item->key = malloc(key_len);
     item->value = malloc(value_size);
+    item->next = NULL;
 
     memcpy(item->key, key, key_len);
     memcpy(item->value, value, value_size);
@@ -99,16 +114,33 @@ void hash_table_insert(struct hash_table* table, struct hash_table_item* item)
         table->items[index] = item;
         ++table->count;
     }
+    else
+    {
+        if (strcmp(indexed_item->key, item->key) == 0)
+        {
+            /* TODO: Replace value here */
+        }
+        else
+        {
+            /* Collision */
+            append_linked_list((struct Node*)indexed_item, (struct Node*)item);
+        }
+    }
 }
 
-struct hash_table_item* hash_table_search(struct hash_table* table, char* key)
+void *hash_table_search(struct hash_table* table, char* key)
 {
     uint64_t index = hash_string_djb2(key) % table->size;
 
     if (table->items[index] == NULL)
         return NULL;
 
-    return strcmp(table->items[index]->key, key) ? NULL : table->items[index];
+    if (strcmp(table->items[index]->key, key) != 0)
+    {
+       return search_linked_list(table->items[index], key); 
+    }
+
+    return table->items[index]->value;
 }
 
 void print_hash_table(struct hash_table* table)
@@ -120,16 +152,22 @@ void print_hash_table(struct hash_table* table)
         item = table->items[i];
 
         if (item)
-            printf("%d:\tname:%s\tage:%d\n", i, item->value->name, item->value->age);
+        {
+            do
+            {
+                printf("%d:\tname:%s\tage:%d\n", i, item->value->name, item->value->age);
+            } while ((item = item->next));
+        }
     }
 }
 
 int main(void)
 {
-    struct hash_table* table = create_hash_table(256);
+    struct hash_table* table = create_hash_table(3);
 
     struct person_info john = { "john", 22 };
     struct person_info ringo = { "ringo", 33 };
+    struct person_info george = { "george", 44 };
 
     struct hash_table_item* john_item = create_hash_table_item(
             john.name, strlen(john.name) + 1, 
@@ -139,8 +177,27 @@ int main(void)
             ringo.name, strlen(ringo.name) + 1,
             &ringo, sizeof(ringo));
 
+    struct hash_table_item* george_item = create_hash_table_item(
+            george.name, strlen(george.name) + 1,
+            &george, sizeof(george));
+
+    printf("\n------[initial]------\n");
+
     hash_table_insert(table, john_item);
     hash_table_insert(table, ringo_item);
+    hash_table_insert(table, george_item);
 
     print_hash_table(table);
+
+    printf("\n------[search]------\n");
+    
+    struct person_info* john2 = hash_table_search(table, "john");
+    printf("john:\tname:%s\tage:%d\n", john2->name, john2->age);
+    
+    struct person_info* ringo2 = hash_table_search(table, "ringo");
+    printf("ringo:\tname:%s\tage:%d\n", ringo2->name, ringo2->age);
+
+    struct person_info* george2 = hash_table_search(table, "george");
+    printf("george:\tname:%s\tage:%d\n", george2->name, george2->age);
+
 }

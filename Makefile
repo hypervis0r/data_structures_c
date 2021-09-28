@@ -4,7 +4,7 @@ CFLAGS :=
 %.o: %.c
 	$(CC) $(CFLAGS) -c $^
 
-hash_table: hash_table.o
+hash_table: hash_table.o linked_list.o
 	$(CC) $(CFLAGS) -o $@ $^
 	@echo "[+] Built hash_table"
 

@@ -1,14 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-struct Node
-{
-    int value;
-    struct Node *next;
-};
-
-void print_linked_list(struct Node* head);
+#include "linked_list.h"
 
 struct Node* init_linked_list_node(int value)
 {
@@ -161,6 +151,7 @@ void print_linked_list(struct Node* head)
     } while ((head = head->next));
 }
 
+#ifndef LINKED_LIST_LIB
 int main(void)
 {
     /*
@@ -208,3 +199,4 @@ int main(void)
 
     print_linked_list(head);
 }
+#endif
