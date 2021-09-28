@@ -93,6 +93,12 @@ void free_hash_table(struct hash_table* table)
         item = table->items[i];
         if (item != NULL)
         {
+            /*
+                Free every item in the chain
+                
+                TODO: maybe popping every value from the end isn't
+                good for performance, maybe we free from the head?
+            */
             do
             {
                 popped = (struct hash_table_item *)pop_linked_list((struct Node*)item);
@@ -118,6 +124,9 @@ void hash_table_insert(struct hash_table* table, struct hash_table_item* item)
 {
     struct hash_table_item* indexed_item = NULL;
 
+    /*
+        Get hash table index
+    */
     uint64_t index = hash_string_djb2(item->key) % table->size;
 
     indexed_item = table->items[index];
@@ -130,6 +139,9 @@ void hash_table_insert(struct hash_table* table, struct hash_table_item* item)
             exit(-1);
         }
 
+        /*
+            Insert item into hash index
+        */
         table->items[index] = item;
         ++table->count;
     }
@@ -141,7 +153,10 @@ void hash_table_insert(struct hash_table* table, struct hash_table_item* item)
         }
         else
         {
-            /* Collision */
+            /* 
+                Hash collision, prepend new item to the
+                head of the chain.
+            */
             table->items[index] = (struct hash_table_item*)prepend_linked_list(
                     (struct Node*)indexed_item, 
                     (struct Node*)item);
@@ -151,29 +166,38 @@ void hash_table_insert(struct hash_table* table, struct hash_table_item* item)
 
 void *hash_table_search(struct hash_table* table, char* key)
 {
+    /*
+        Get hash table index
+    */
     uint64_t index = hash_string_djb2(key) % table->size;
 
     if (table->items[index] == NULL)
         return NULL;
-
-    if (strcmp(table->items[index]->key, key) != 0)
-    {
-       return search_linked_list(table->items[index], key); 
-    }
-
-    return table->items[index]->value;
+    
+    /*
+        If the key at the index is different from search key,
+        we have to walk the chain to find the value. We do this
+        anyways as there is no need to branch here.
+    */
+    return search_linked_list(table->items[index], key); 
 }
 
 void print_hash_table(struct hash_table* table)
 {
     struct hash_table_item* item = NULL;
 
+    /*
+        Print every valid item index.
+    */
     for (int i = 0; i < table->size; i++)
     {
         item = table->items[i];
 
         if (item)
         {
+            /*
+                Walk item chain to print all items
+            */
             do
             {
                 printf("%d:\tname:%s\tage:%d\tnext:%p\n", i, item->value->name, item->value->age, item->next);
