@@ -22,7 +22,6 @@ struct hash_table
 {
     struct hash_table_item** items;
     size_t size;
-    size_t count;
 };
 
 void print_hash_table(struct hash_table* table);
@@ -76,7 +75,6 @@ struct hash_table* create_hash_table(size_t size)
     struct hash_table* table = malloc(sizeof(*table));
 
     table->size = size;
-    table->count = 0;
 
     table->items = calloc(table->size, sizeof(*table->items));
 
@@ -133,34 +131,23 @@ void hash_table_insert(struct hash_table* table, struct hash_table_item* item)
 
     if (indexed_item == NULL)
     {
-        if (table->count >= table->size)
-        {
-            printf("[-] Table overflow");
-            exit(-1);
-        }
-
         /*
             Insert item into hash index
         */
         table->items[index] = item;
-        ++table->count;
     }
     else
     {
-        if (strcmp(indexed_item->key, item->key) == 0)
-        {
-            /* TODO: Replace value here */
-        }
-        else
-        {
-            /* 
-                Hash collision, prepend new item to the
-                head of the chain.
-            */
-            table->items[index] = (struct hash_table_item*)prepend_linked_list(
-                    (struct Node*)indexed_item, 
-                    (struct Node*)item);
-        }
+        /* 
+            Hash collision, prepend new item to the
+            head of the chain.
+
+            TODO: Find a way to modify existing entries without
+            costing insert time complexity to become O(n)
+        */
+        table->items[index] = (struct hash_table_item*)prepend_linked_list(
+                (struct Node*)indexed_item, 
+                (struct Node*)item);
     }
 }
 
