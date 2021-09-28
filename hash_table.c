@@ -25,6 +25,8 @@ struct hash_table
     size_t count;
 };
 
+void print_hash_table(struct hash_table* table);
+
 void* search_linked_list(struct hash_table_item* head, char* key)
 {
     do
@@ -84,13 +86,30 @@ struct hash_table* create_hash_table(size_t size)
 void free_hash_table(struct hash_table* table)
 {
     struct hash_table_item* item = NULL;
+    struct hash_table_item* popped = NULL;
 
     for (int i = 0; i < table->size; i++)
     {
         item = table->items[i];
         if (item != NULL)
-            free_hash_table_item(item);
+        {
+            do
+            {
+                popped = (struct hash_table_item *)pop_linked_list((struct Node*)item);
+                
+                if (popped == item)
+                {
+                    free_hash_table_item(item);
+                    table->items[i] = NULL;
+                    break;
+                }
+
+                free_hash_table_item(popped);
+            } while (popped != NULL);
+        }
     }
+
+    print_hash_table(table);
 
     free(table);
 }
@@ -155,7 +174,7 @@ void print_hash_table(struct hash_table* table)
         {
             do
             {
-                printf("%d:\tname:%s\tage:%d\n", i, item->value->name, item->value->age);
+                printf("%d:\tname:%s\tage:%d\tnext:%p\n", i, item->value->name, item->value->age, item->next);
             } while ((item = item->next));
         }
     }
@@ -200,4 +219,5 @@ int main(void)
     struct person_info* george2 = hash_table_search(table, "george");
     printf("george:\tname:%s\tage:%d\n", george2->name, george2->age);
 
+    free_hash_table(table);
 }
