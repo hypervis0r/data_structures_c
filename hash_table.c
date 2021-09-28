@@ -142,7 +142,9 @@ void hash_table_insert(struct hash_table* table, struct hash_table_item* item)
         else
         {
             /* Collision */
-            append_linked_list((struct Node*)indexed_item, (struct Node*)item);
+            table->items[index] = (struct hash_table_item*)prepend_linked_list(
+                    (struct Node*)indexed_item, 
+                    (struct Node*)item);
         }
     }
 }
